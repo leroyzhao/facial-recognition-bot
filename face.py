@@ -7,7 +7,10 @@ from playsound import playsound
 import threading
 
 from tapTester import TapTester
+import keys
 
+
+# initialize Tap Tester
 tt = TapTester()
 
 ###########
@@ -15,6 +18,9 @@ def play_welcome():
     playsound('audio.mp3')
 thr_welcome = threading.Thread(target=play_welcome, args=(), kwargs={})
 ###########
+
+# set initial mode
+mode = keys.MODE_REGULAR
 rps_mode = False
 ###########
 
@@ -43,23 +49,22 @@ while 1:
     # cv2.line(img,(500,250),(0,250),(0,255,0),1)
     # cv2.line(img,(250,0),(250,500),(0,255,0),1)
     # cv2.circle(img, (250, 250), 5, (255, 255, 255), -1)
-    gray  = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
-    faces = face_cascade.detectMultiScale(gray, 1.3)
 
-# notes:
-# in loop, set booleans. then run functions after img.show
-    #####################
-    # print(type(faces),faces, isinstance(faces, tuple))
-    if not isinstance(faces, tuple):
-        for (x,y,w,h) in faces:
-            if w < 70 and h < 70:
-                cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),5)
-            else:
-                cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),5)
-                # print("WAVE")
-                if not thr_welcome.is_alive():
-                    thr_welcome = threading.Thread(target=play_welcome, args=(), kwargs={})
-                    thr_welcome.start()
+    ##### FACE DETECTION ##########
+    if mode == keys.MODE_REGULAR:
+        gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
+        faces = face_cascade.detectMultiScale(gray, 1.3)
+
+        if not isinstance(faces, tuple):
+            for (x,y,w,h) in faces:
+                if w < 70 and h < 70:
+                    cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),5)
+                else:
+                    cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),5)
+                    # print("WAVE")
+                    if not thr_welcome.is_alive():
+                        thr_welcome = threading.Thread(target=play_welcome, args=(), kwargs={})
+                        thr_welcome.start()
 
 # #detect the face and make a rectangle around it.
 #     for (x,y,w,h) in faces:
@@ -88,6 +93,9 @@ while 1:
 #         print ("output = '" +data+ "'")
 #         #arduino.write(data)
 
+# notes:
+# in loop, set booleans. then run functions after img.show
+
 #Display the stream.
     cv2.imshow('img',img)
 
@@ -95,3 +103,7 @@ while 1:
     k = cv2.waitKey(30) & 0xff
     if k == 27:
        break
+    if k == ord('r'):
+        print("ROCK PAPER SCISSORS")
+    if k == ord('1'):
+        print("REGULAR")
