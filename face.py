@@ -36,22 +36,16 @@ face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 cap = cv2.VideoCapture(0)
 
 #Read the captured image, convert it to Gray image and find faces
-while 1:
-    tapped = tt.listen()
-    if tapped == True:
-        print("Tapped")
-        rps_mode = True
-    ret, img = cap.read()
-    cv2.resizeWindow('img', 500, 500)
-    # cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
-    # cv2.setWindowProperty("img",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
-    # cv2.setWindowProperty("img",1,0)
-    # cv2.line(img,(500,250),(0,250),(0,255,0),1)
-    # cv2.line(img,(250,0),(250,500),(0,255,0),1)
-    # cv2.circle(img, (250, 250), 5, (255, 255, 255), -1)
+def run_face_detection():
+    global mode, thr_welcome
+    while 1:
+        tapped = tt.listen()
+        if tapped == True:
+            print("Tapped")
+            rps_mode = True
+        ret, img = cap.read()
+        cv2.resizeWindow('img', 500, 500)
 
-    ##### FACE DETECTION ##########
-    if mode == keys.MODE_REGULAR:
         gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
         faces = face_cascade.detectMultiScale(gray, 1.3)
 
@@ -61,49 +55,81 @@ while 1:
                     cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),5)
                 else:
                     cv2.rectangle(img,(x,y),(x+w,y+h),(0,255,0),5)
-                    # print("WAVE")
                     if not thr_welcome.is_alive():
                         thr_welcome = threading.Thread(target=play_welcome, args=(), kwargs={})
                         thr_welcome.start()
 
-# #detect the face and make a rectangle around it.
-#     for (x,y,w,h) in faces:
-#         cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),5)
-#         roi_gray  = gray[y:y+h, x:x+w]
-#         roi_color = img[y:y+h, x:x+w]
+        if mode == keys.MODE_RPS:
+            print(keys.MODE_RPS)
 
-#         arr = {y:y+h, x:x+w}
-#         print (arr)
+    #Display the stream.
+        cv2.imshow('img',img)
 
-#         print ('X :' +str(x))
-#         print ('Y :'+str(y))
-#         print ('x+w :' +str(x+w))
-#         print ('y+h :' +str(y+h))
+    #Hit 'Esc' to terminate execution 
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            sys.exit("program terminated")
+        if k == ord('r'):
+            print("switch to RPS")
+            mode = keys.MODE_RPS
+            break
 
-# # Center of roi (Rectangle)
-#         xx = int(x+(x+h))/2
-#         yy = int(y+(y+w))/2
-#         print (xx)
-#         print (yy)
-#         center = (xx,yy)
+def run_rps():
+    global mode
+    while 1:
+        print('blahblah')
 
-# # sending data to arduino
-#         print("Center of Rectangle is :", center)
-#         data = "X{0:d}Y{1:d}Z".format(xx, yy)
-#         print ("output = '" +data+ "'")
-#         #arduino.write(data)
+        k = cv2.waitKey(30) & 0xff
+        if k == 27:
+            sys.exit("program terminated")
+        if k == ord('1'):
+            print("switch to REGULAR")
+            mode = keys.MODE_REGULAR
+            break
 
-# notes:
-# in loop, set booleans. then run functions after img.show
+# MAIN LOOP
+while 1:
+    if mode == keys.MODE_REGULAR:
+        run_face_detection()
+        print ('face detection ended')
+    
+    if mode == keys.MODE_RPS:
+        run_rps()
+        print ('rps ended')
 
-#Display the stream.
-    cv2.imshow('img',img)
+##########################################
+# Extra:
+# cv2.namedWindow("img", cv2.WND_PROP_FULLSCREEN)
+# cv2.setWindowProperty("img",cv2.WND_PROP_FULLSCREEN,cv2.WINDOW_FULLSCREEN)
+# cv2.setWindowProperty("img",1,0)
+# cv2.line(img,(500,250),(0,250),(0,255,0),1)
+# cv2.line(img,(250,0),(250,500),(0,255,0),1)
+# cv2.circle(img, (250, 250), 5, (255, 255, 255), -1)
 
-#Hit 'Esc' to terminate execution 
-    k = cv2.waitKey(30) & 0xff
-    if k == 27:
-       break
-    if k == ord('r'):
-        print("ROCK PAPER SCISSORS")
-    if k == ord('1'):
-        print("REGULAR")
+
+    # #detect the face and make a rectangle around it.
+    #     for (x,y,w,h) in faces:
+    #         cv2.rectangle(img,(x,y),(x+w,y+h),(0,0,255),5)
+    #         roi_gray  = gray[y:y+h, x:x+w]
+    #         roi_color = img[y:y+h, x:x+w]
+
+    #         arr = {y:y+h, x:x+w}
+    #         print (arr)
+
+    #         print ('X :' +str(x))
+    #         print ('Y :'+str(y))
+    #         print ('x+w :' +str(x+w))
+    #         print ('y+h :' +str(y+h))
+
+    # # Center of roi (Rectangle)
+    #         xx = int(x+(x+h))/2
+    #         yy = int(y+(y+w))/2
+    #         print (xx)
+    #         print (yy)
+    #         center = (xx,yy)
+
+    # # sending data to arduino
+    #         print("Center of Rectangle is :", center)
+    #         data = "X{0:d}Y{1:d}Z".format(xx, yy)
+    #         print ("output = '" +data+ "'")
+    #         #arduino.write(data)
