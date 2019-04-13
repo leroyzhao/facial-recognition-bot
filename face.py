@@ -3,6 +3,7 @@ import serial
 import time
 import sys
 import cv2
+import math
 from playsound import playsound
 import threading
 
@@ -26,7 +27,7 @@ rps_mode = False
 
 #Setup Communication path for arduino (In place of 'COM5' put the port to which your arduino is connected)
 #arduino = serial.Serial('COM3', 9600) 
-time.sleep(2)
+# time.sleep(2)
 print("Connected to arduino...")
 
 #importing the Haarcascade for face detection
@@ -71,7 +72,6 @@ def run_face_detection():
             sys.exit("program terminated")
         if k == ord('r'):
             cv2.destroyAllWindows()
-            cap.release()
             print("switch to RPS")
             mode = keys.MODE_RPS
             break
@@ -86,24 +86,20 @@ def run_rps():
             ret, frame = cap.read()
             frame=cv2.flip(frame,1)
             kernel = np.ones((3,3),np.uint8)
-            
+
             #define region of interest
             roi=frame[100:300, 100:300]
-            
             
             cv2.rectangle(frame,(100,100),(300,300),(0,255,0),0)    
             hsv = cv2.cvtColor(roi, cv2.COLOR_BGR2HSV)
             
             
-            
         # define range of skin color in HSV
             lower_skin = np.array([0,20,70], dtype=np.uint8)
             upper_skin = np.array([20,255,255], dtype=np.uint8)
-            
+
         #extract skin colur imagw  
-            mask = cv2.inRange(hsv, lower_skin, upper_skin)
-            
-    
+            mask = cv2.inRange(hsv, lower_skin, upper_skin)   
             
         #extrapolate the hand to fill dark spots within
             mask = cv2.dilate(mask,kernel,iterations = 4)
@@ -111,14 +107,11 @@ def run_rps():
         #blur the image
             mask = cv2.GaussianBlur(mask,(5,5),100) 
             
-            
-            
         #find contours
-            _,contours,hierarchy= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
+            contours,hierarchy= cv2.findContours(mask,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         
-    #find contour of max area(hand)
+        #find contour of max area(hand)
             cnt = max(contours, key = lambda x: cv2.contourArea(x))
-            
         #approx the contour a little
             epsilon = 0.0005*cv2.arcLength(cnt,True)
             approx= cv2.approxPolyDP(cnt,epsilon,True)
@@ -182,31 +175,34 @@ def run_rps():
                     cv2.putText(frame,'Put hand in the box',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                 else:
                     if arearatio<12:
-                        cv2.putText(frame,'0',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
-                    elif arearatio<17.5:
-                        cv2.putText(frame,'Best of luck',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                        cv2.putText(frame,'ROCK',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                    # elif arearatio<17.5:
+                    #     cv2.putText(frame,'Best of luck',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                     
-                    else:
-                        cv2.putText(frame,'1',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                    # else:
+                    #     cv2.putText(frame,'1',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                         
             elif l==2:
-                cv2.putText(frame,'2',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
-                
-            elif l==3:
+                cv2.putText(frame,'SCISSORS',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
             
-                if arearatio<27:
-                        cv2.putText(frame,'3',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
-                else:
-                        cv2.putText(frame,'ok',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            elif l>2 & l<=5:
+                cv2.putText(frame,'PAPER',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+                
+            # elif l==3:
+            
+            #     if arearatio<27:
+            #             cv2.putText(frame,'3',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            #     else:
+            #             cv2.putText(frame,'ok',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                         
-            elif l==4:
-                cv2.putText(frame,'4',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            # elif l==4:
+            #     cv2.putText(frame,'4',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                 
-            elif l==5:
-                cv2.putText(frame,'5',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            # elif l==5:
+            #     cv2.putText(frame,'5',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                 
-            elif l==6:
-                cv2.putText(frame,'reposition',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
+            # elif l==6:
+            #     cv2.putText(frame,'reposition',(0,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
                 
             else :
                 cv2.putText(frame,'reposition',(10,50), font, 2, (0,0,255), 3, cv2.LINE_AA)
@@ -217,11 +213,13 @@ def run_rps():
         except:
             pass
             
-        
-        k = cv2.waitKey(5) & 0xFF
+        k = cv2.waitKey(30) & 0xff
         if k == 27:
+            sys.exit("program terminated")
+        if k == ord('1'):
+            cv2.destroyAllWindows()
+            print("switch to REGULAR")
             mode = keys.MODE_REGULAR
-            print ("ENDED")
             break
         
 
